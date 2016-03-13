@@ -87,6 +87,9 @@ namespace DGMediaplayer
                 if (!_webClients[index].IsBusy)
                 {
                     ModifyProgressBarColor.SetState(_progressBars[index], 1);
+                    _progressBars[index].Value = _progressBars[index].Minimum;
+                    _labels[index].Text = _files[index];
+                    panelDownloads.ScrollControlIntoView(_progressBars[index]);
                     _startTimes[index] = DateTime.Now;
                     using (_webClients[index])
                     {
@@ -130,6 +133,14 @@ namespace DGMediaplayer
                         panelDownloads.Controls.Add(_progressBars[i]);
                     }
                     panelDownloads.AutoScroll = true;
+                    if (index < _progressBars.Count && index >=0)
+                    {
+                        panelDownloads.ScrollControlIntoView(_progressBars[index]);
+                    }
+                    else if (index - 1 < _progressBars.Count && index - 1 >=0)
+                    {
+                        panelDownloads.ScrollControlIntoView(_progressBars[index - 1]);
+                    }
                 }
             }
         }
@@ -201,8 +212,11 @@ namespace DGMediaplayer
                 }
                 if (allFinished)
                 {
-                    downloadFinishedNotification.Visible = true;
-                    downloadFinishedNotification.ShowBalloonTip(2000);
+                    if ((Form) this != Form.ActiveForm)
+                    {
+                        downloadFinishedNotification.Visible = true;
+                        downloadFinishedNotification.ShowBalloonTip(2000);
+                    }
                     _parentform.ReloadMedia();
                     _parentform.AllowClosing();
                 }
@@ -330,6 +344,7 @@ namespace DGMediaplayer
                 _progressBars.Add(progressBar);
                 panelDownloads.Controls.Add(progressBar);
                 panelDownloads.AutoScroll = true;
+                panelDownloads.ScrollControlIntoView(progressBar);
 
                 WebClient webClient = new WebClient();
                 using (webClient)
@@ -358,6 +373,32 @@ namespace DGMediaplayer
             for (int i = 0; i < _webClients.Count; i++)
             {
                 _webClients[i].CancelAsync();
+            }
+        }
+
+        public void RestartAll()
+        {
+            for (int i = 0; i < _webClients.Count; i++)
+            {
+                if (!File.Exists(_paths[i] + _files[i]))
+                {
+                    if (!_webClients[i].IsBusy)
+                    {
+                        ModifyProgressBarColor.SetState(_progressBars[i], 1);
+                        _progressBars[i].Value = _progressBars[i].Minimum;
+                        _labels[i].Text = _files[i];
+                        panelDownloads.ScrollControlIntoView(_progressBars[i]);
+                        _startTimes[i] = DateTime.Now;
+                        using (_webClients[i])
+                        {
+                            _webClients[i].DownloadProgressChanged += wc_DownloadProgressChanged;
+                            _webClients[i].DownloadFileCompleted += wc_DownloadCompleted;
+                            _webClients[i].DownloadFileAsync(new System.Uri(_URIs[i]), _paths[i] + _files[i]);
+                        }
+                        _finished[i] = false;
+                        _parentform.DisAllowClosing();
+                    }
+                }
             }
         }
 

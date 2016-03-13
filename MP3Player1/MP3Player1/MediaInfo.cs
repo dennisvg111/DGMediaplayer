@@ -199,16 +199,24 @@ namespace MP3Player1
         {
             if (!string.IsNullOrEmpty(Path) && Directory.Exists(Path))
             {
-                if (parentform != null && !string.IsNullOrEmpty(parentform.CurrentMediaString) && System.IO.File.Exists(parentform.CurrentMediaString))
+                if (FilesList != null && FilesList.Count != 0)
                 {
-                    string filePath = @parentform.CurrentMediaString.Replace(@"/", @"\");
-                    if (!File.Exists(filePath))
+                    if (parentform != null && !string.IsNullOrEmpty(parentform.CurrentMediaString) &&
+                        System.IO.File.Exists(parentform.CurrentMediaString))
                     {
-                        return;
-                    }
-                    string argument = "/select, \"" + filePath+"\"";
+                        string filePath = @parentform.CurrentMediaString.Replace(@"/", @"\");
+                        if (!File.Exists(filePath))
+                        {
+                            return;
+                        }
+                        string argument = "/select, \"" + filePath + "\"";
 
-                    System.Diagnostics.Process.Start("explorer.exe", argument);
+                        Process.Start("explorer.exe", argument);
+                    }
+                    else
+                    {
+                        Process.Start(Path);
+                    }
                 }
                 else
                 {
@@ -292,18 +300,40 @@ namespace MP3Player1
             }
         }
 
-        private void btnDownload_Click(object sender, EventArgs e)
+        private void btnDownload_MouseDown(object sender, MouseEventArgs e)
         {
-            if (parentform.GetDownload() == null)
+            if (e.Button == MouseButtons.Left)
             {
-                parentform.SetDownload(new DGMediaplayer.Download(Path, parentform));
-                parentform.GetDownload().Location = new Point(this.Left, this.Top);
-                parentform.GetDownload().Size = this.MinimumSize;
-                parentform.GetDownload().MinimumSize = this.MinimumSize;
+                if (parentform.GetDownload() == null)
+                {
+                    parentform.SetDownload(new DGMediaplayer.Download(Path, parentform));
+                    parentform.GetDownload().Location = new Point(this.Left, this.Top);
+                    parentform.GetDownload().Size = this.MinimumSize;
+                    parentform.GetDownload().MinimumSize = this.MinimumSize;
+                }
+                parentform.GetDownload().SetPath(Path);
+                parentform.GetDownload().StartPosition = FormStartPosition.Manual;
+                parentform.GetDownload().Show();
             }
-            parentform.GetDownload().SetPath(Path);
-            parentform.GetDownload().StartPosition = FormStartPosition.Manual;
-            parentform.GetDownload().Show();
+            if (e.Button == MouseButtons.Right && parentform.GetDownload() != null)
+            {
+                ContextMenuStrip downloadContextMenuStrip = new ContextMenuStrip();
+                ToolStripItem cancelAll = downloadContextMenuStrip.Items.Add("Cancel all downloads");
+                cancelAll.Click += contexMenu_CancelAllClicked;
+                ToolStripItem restartAll = downloadContextMenuStrip.Items.Add("Restart all downloads");
+                restartAll.Click += contexMenu_RestartAllClicked;
+                downloadContextMenuStrip.Show(MousePosition);
+            }
+        }
+
+        void contexMenu_CancelAllClicked(object sender, EventArgs e)
+        {
+            parentform.GetDownload().CancelAll();
+        }
+
+        void contexMenu_RestartAllClicked(object sender, EventArgs e)
+        {
+            parentform.GetDownload().RestartAll();
         }
     }
 }

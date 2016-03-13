@@ -152,7 +152,7 @@
             this.btnDownload.Size = new System.Drawing.Size(27, 24);
             this.btnDownload.TabIndex = 10;
             this.btnDownload.UseVisualStyleBackColor = true;
-            this.btnDownload.Click += new System.EventHandler(this.btnDownload_Click);
+            this.btnDownload.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btnDownload_MouseDown);
             // 
             // MediaInfo
             // 
